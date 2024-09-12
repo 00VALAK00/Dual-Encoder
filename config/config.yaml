@@ -1,0 +1,30 @@
+version : 1
+formatters:
+  console_format:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  file_format:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(filename)s: - %(message)s'
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: console_format
+    stream: ext://sys.stdout
+  file:
+    class: logging.FileHandler
+    level: INFO
+    formatter: file_format
+    filename: ../outputs/logs.log
+    mode: a  # append mode, or 'w' for overwrite
+    encoding: utf-8
+
+loggers:
+  my_module:
+    level: INFO
+    handlers: [console, file]
+    propagate: no
+
+root:
+  level: INFO
+  handlers: [console]

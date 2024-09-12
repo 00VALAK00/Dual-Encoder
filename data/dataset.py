@@ -8,6 +8,7 @@ from transformers import AutoTokenizer
 
 class CustomDataset(Dataset):
     def __init__(self,tokenize=False):
+
         self.dataset = load_dataset("enelpol/rag-mini-bioasq", "question-answer-passages", split="train")
         self.tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
         if tokenize:

@@ -1,11 +1,8 @@
 import torch.nn as nn
-from transformers import AutoTokenizer
-import tqdm
 import warnings
-import logging
+from config.load_logger import console_logger
+
 import torch
-from loss.loss import CrossEntropyLoss
-import numpy as np
 
 warnings.filterwarnings("ignore")
 
@@ -40,33 +37,11 @@ class DualEncoder(torch.nn.Module):
         self.q_encoder = Encoder(tokenizer, embed_dim, output_dim)
         self.a_encoder = Encoder(tokenizer, embed_dim, output_dim)
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        console_logger.info(
+            f"Dual encoder model for Q&A successfully initialized with:\n\n embedding dimension:{embed_dim} \n "
+            f"output_dim:{output_dim} ")
 
     def forward(self, question, answer):
         q_embeddings = self.q_encoder(question)
         a_embeddings = self.a_encoder(answer)
         return q_embeddings, a_embeddings, q_embeddings @ a_embeddings.T
-
-    def train(self, epochs=20, criterion=CrossEntropyLoss(), data_loader=None):
-        num_batches = len(data_loader)
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-5)
-        for epoch in range(epochs):
-            print(f'Epoch {epoch + 1}/{epochs}')
-            running_loss = []
-
-            for batch, (q, a) in enumerate(tqdm.tqdm(data_loader)):
-
-                q = {k: v.to(self.device) for k, v in q.items()}
-                a = {k: v.to(self.device) for k, v in a.items()}
-
-                optimizer.zero_grad()
-
-                _, _, similarity_scores = self(q, a)
-                if torch.isnan(similarity_scores).any():
-                    raise ValueError("Nan values detected in similarity_scores.")
-                loss = criterion(similarity_scores)
-
-                loss.backward()
-                optimizer.step()
-                running_loss.append(loss.item())
-                if batch % 10 == 0:
-                    print(f"Epoch {epoch}, loss = {np.mean(running_loss)}")
